@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 
 class Class extends Equatable {
   final String code;
-  final String fullName;
+  final String? fullName;
   final String link;
 
   const Class({
@@ -49,5 +49,5 @@ class Class extends Equatable {
   String toString() => 'Class(code: $code, fullName: $fullName, link: $link)';
 
   @override
-  List<Object> get props => [code, fullName, link];
+  List<Object?> get props => [code, fullName, link];
 }

@@ -7,7 +7,7 @@ import 'teacher_model.dart';
 
 class Lesson extends Equatable {
   final String name;
-  final String? group;
+  final int? group;
   final Teacher teacher;
   final Classroom classroom;
 
@@ -20,7 +20,7 @@ class Lesson extends Equatable {
 
   Lesson copyWith({
     String? name,
-    String? group,
+    int? group,
     Teacher? teacher,
     Classroom? classroom,
   }) {

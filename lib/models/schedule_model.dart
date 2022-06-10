@@ -14,12 +14,14 @@ class Schedule extends Equatable {
   final Type type;
   final String validFrom;
   final Map<int, String> hours;
+  final int groups;
   final List<List<List<Lesson>>> schedule;
 
   const Schedule({
     required this.type,
     required this.validFrom,
     required this.hours,
+    required this.groups,
     required this.schedule,
   });
 
@@ -27,12 +29,14 @@ class Schedule extends Equatable {
     Type? type,
     String? validFrom,
     Map<int, String>? hours,
+    int? groups,
     List<List<List<Lesson>>>? schedule,
   }) {
     return Schedule(
       type: type ?? this.type,
       validFrom: validFrom ?? this.validFrom,
       hours: hours ?? this.hours,
+      groups: groups ?? this.groups,
       schedule: schedule ?? this.schedule,
     );
   }
@@ -61,9 +65,9 @@ class Schedule extends Equatable {
 
   @override
   String toString() {
-    return 'Schedule(type: $type, validFrom: $validFrom, hours: $hours, schedule: $schedule)';
+    return 'Schedule(type: $type, validFrom: $validFrom, hours: $hours, group: $groups, schedule: $schedule)';
   }
 
   @override
-  List<Object> get props => [type, validFrom, hours, schedule];
+  List<Object> get props => [type, validFrom, hours, groups, schedule];
 }

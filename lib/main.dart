@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zst_schedule/bloc/lists_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 import 'package:zst_schedule/repositories/schedule_repo.dart';
+import 'package:zst_schedule/screens/home_screen.dart';
+import 'package:zst_schedule/screens/schedule_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,75 +15,183 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var listsRepo = ListsRepo();
-    return MaterialApp(
-      title: 'Flutter Demo',
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text("ZST SCHEDULE"),
+    final ListsRepo listsRepo = ListsRepo();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ListsBloc>(
+          create: (BuildContext context) =>
+              ListsBloc(listsRepo)..add(const GetLists()),
+          lazy: false,
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              ElevatedButton(
-                child: const Text("Download classes"),
-                onPressed: () async {
-                  print(await listsRepo.getClasses());
-                },
-              ),
-              ElevatedButton(
-                child: const Text("Download teachers"),
-                onPressed: () async {
-                  print(await listsRepo.getTeachers());
-                },
-              ),
-              ElevatedButton(
-                child: const Text("Download classrooms"),
-                onPressed: () async {
-                  print(await listsRepo.getClassrooms());
-                },
-              ),
-              ElevatedButton(
-                child: const Text("Download schedule"),
-                onPressed: () async {
-                  print(await listsRepo.getSchedule());
-                },
-              ),
-              FutureBuilder(
-                future: listsRepo.getSchedule(),
-                builder:
-                    (BuildContext context, AsyncSnapshot<Schedule> snapshot) {
-                  if (snapshot.hasData) {
-                    var scheduleList = snapshot.data!.schedule[1];
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: scheduleList.length,
-                      itemBuilder: ((context, index) {
-                        var lesson = scheduleList[index];
-
-                        if (lesson.isNotEmpty) {
-                          return ListTile(
-                            leading: Text("$index."),
-                            title: Text(lesson[0].name),
-                            subtitle: Text(lesson[0].classroom.oldNumber +
-                                " " +
-                                lesson[0].teacher.code),
-                          );
-                        } else {
-                          return const SizedBox();
-                        }
-                      }),
-                    );
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                },
-              )
-            ],
-          ),
-        ),
+      ],
+      child: MaterialApp(
+        title: 'ZST Schedule',
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const HomeScreen(),
+          '/schedule': (context) => const ScheduleScreen(),
+        },
       ),
+    );
+  }
+}
+
+//Poniżej to tylko kopie
+
+class ScheduleList extends StatelessWidget {
+  const ScheduleList({
+    Key? key,
+    required this.listsRepo,
+  }) : super(key: key);
+
+  final ListsRepo listsRepo;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: listsRepo.getSchedule('o23.html'),
+      builder: (BuildContext context, AsyncSnapshot<Schedule> snapshot) {
+        if (snapshot.hasData) {
+          var scheduleList = snapshot.data!.schedule[1];
+          var maxGroup = snapshot.data!.groups;
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: scheduleList.length,
+            itemBuilder: ((context, index) {
+              var lesson = scheduleList[index];
+
+              if (lesson.isNotEmpty) {
+                return ListTile(
+                  leading: Text("$index."),
+                  title: Text(lesson[0].name),
+                  trailing: lesson[0].group != null
+                      ? Text("${lesson[0].group}/$maxGroup")
+                      : null,
+                  subtitle: Text(lesson[0].classroom.oldNumber +
+                      " " +
+                      lesson[0].teacher.code),
+                );
+              } else {
+                return const SizedBox();
+              }
+            }),
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
+      },
+    );
+  }
+}
+
+class ClassesList extends StatelessWidget {
+  const ClassesList({
+    Key? key,
+    required this.listsRepo,
+  }) : super(key: key);
+
+  final ListsRepo listsRepo;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: listsRepo.getClasses(),
+      builder: (BuildContext context, AsyncSnapshot<List<Class>> snapshot) {
+        if (snapshot.hasData) {
+          var classesList = snapshot.data!;
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: classesList.length,
+            itemBuilder: ((context, index) {
+              var schoolClass = classesList[index];
+              return ListTile(
+                leading: Text("$index."),
+                title: Text(
+                    schoolClass.code + " | " + schoolClass.fullName.toString()),
+                subtitle: Text(schoolClass.link),
+              );
+            }),
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
+      },
+    );
+  }
+}
+
+class ClassroomsList extends StatelessWidget {
+  const ClassroomsList({
+    Key? key,
+    required this.listsRepo,
+  }) : super(key: key);
+
+  final ListsRepo listsRepo;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: listsRepo.getClassrooms(),
+      builder: (BuildContext context, AsyncSnapshot<List<Classroom>> snapshot) {
+        if (snapshot.hasData) {
+          var classroomsList = snapshot.data!;
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: classroomsList.length,
+            itemBuilder: ((context, index) {
+              var classroom = classroomsList[index];
+              return ListTile(
+                leading: Text("$index."),
+                title: Text(classroom.oldNumber +
+                    " | " +
+                    classroom.newNumber.toString()),
+                subtitle: Text(classroom.link),
+              );
+            }),
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
+      },
+    );
+  }
+}
+
+class TeachersList extends StatelessWidget {
+  const TeachersList({
+    Key? key,
+    required this.listsRepo,
+  }) : super(key: key);
+
+  final ListsRepo listsRepo;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: listsRepo.getTeachers(),
+      builder: (BuildContext context, AsyncSnapshot<List<Teacher>> snapshot) {
+        if (snapshot.hasData) {
+          var teachersList = snapshot.data!;
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: teachersList.length,
+            itemBuilder: ((context, index) {
+              var teacher = teachersList[index];
+              return ListTile(
+                leading: Text("$index."),
+                title: Text(teacher.code + " | " + teacher.fullName.toString()),
+                subtitle: Text(teacher.link),
+              );
+            }),
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
+      },
     );
   }
 }

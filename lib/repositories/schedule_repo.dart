@@ -4,12 +4,33 @@ import 'package:http/http.dart' as http;
 import 'package:zst_schedule/models/models.dart';
 
 class ListsRepo {
-  static const String listsUrl = 'http://www.zstrybnik.pl/html/lista.html';
-  static const String schedulesUrl =
-      'http://www.zstrybnik.pl/html/plany/o23.html';
+  static const String url = 'http://www.zstrybnik.pl/html';
+
+  List<String> getClassroomNumber(String downloadedNumber) {
+    var numbers = downloadedNumber.split(' ');
+    return numbers;
+  }
+
+  List<String> getClassName(String downloadedName) {
+    var names = downloadedName.split(' ');
+    if (names.length > 1) {
+      var code = names.removeAt(0);
+      return [code, names.join(' ').substring(1)];
+    }
+    return [downloadedName];
+  }
+
+  List getGroupLesson(String downloadedText) {
+    var texts = downloadedText.split('-');
+    int lessonGroup = int.parse(texts[texts.length - 1].split('/')[0]);
+    int scheduleGroups = int.parse(texts[texts.length - 1].split('/')[1]);
+    texts.removeLast();
+    String lessonName = texts.join('-');
+    return [lessonName, lessonGroup, scheduleGroups];
+  }
 
   Future<List<Class>> getClasses() async {
-    final response = await http.Client().get(Uri.parse(listsUrl));
+    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
 
     if (response.statusCode == 200) {
       var document = parser.parse(utf8.decode(response.bodyBytes));
@@ -21,10 +42,18 @@ class ListsRepo {
       List<Class> classes = [];
 
       for (var item in tabs2) {
-        var code = item.firstChild?.text ?? '';
+        var downloadedNames = item.firstChild?.text ?? '';
         var link = item.firstChild?.attributes['href'] ?? '';
 
-        classes.add(Class(code: code, fullName: code, link: link));
+        var names = getClassName(downloadedNames);
+
+        classes.add(
+          Class(
+            code: names[0],
+            fullName: names.length == 2 ? names[1] : null,
+            link: link,
+          ),
+        );
       }
       return classes;
     } else {
@@ -33,7 +62,7 @@ class ListsRepo {
   }
 
   Future<List<Teacher>> getTeachers() async {
-    final response = await http.Client().get(Uri.parse(listsUrl));
+    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
 
     if (response.statusCode == 200) {
       var document = parser.parse(utf8.decode(response.bodyBytes));
@@ -48,7 +77,9 @@ class ListsRepo {
         var code = item.firstChild?.text ?? '';
         var link = item.firstChild?.attributes['href'] ?? '';
 
-        teachers.add(Teacher(code: code, link: link));
+        teachers.add(
+          Teacher(code: code, link: link),
+        );
       }
       return teachers;
     } else {
@@ -57,7 +88,7 @@ class ListsRepo {
   }
 
   Future<List<Classroom>> getClassrooms() async {
-    final response = await http.Client().get(Uri.parse(listsUrl));
+    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
 
     if (response.statusCode == 200) {
       var document = parser.parse(utf8.decode(response.bodyBytes));
@@ -69,10 +100,18 @@ class ListsRepo {
       List<Classroom> classrooms = [];
 
       for (var item in tabs2) {
-        var numbers = item.firstChild?.text ?? '';
+        var downloadedNumbers = item.firstChild?.text ?? '';
         var link = item.firstChild?.attributes['href'] ?? '';
 
-        classrooms.add(Classroom(oldNumber: numbers, link: link));
+        var numbers = getClassroomNumber(downloadedNumbers);
+
+        classrooms.add(
+          Classroom(
+            oldNumber: numbers[0],
+            newNumber: numbers.length == 2 ? numbers[1] : null,
+            link: link,
+          ),
+        );
       }
       return classrooms;
     } else {
@@ -80,8 +119,9 @@ class ListsRepo {
     }
   }
 
-  Future<Schedule> getSchedule() async {
-    final response = await http.Client().get(Uri.parse(schedulesUrl));
+  Future<Schedule> getSchedule(String scheduleUrl) async {
+    final response =
+        await http.Client().get(Uri.parse(url + '/' + scheduleUrl));
 
     if (response.statusCode == 200) {
       var document = parser.parse(utf8.decode(response.bodyBytes));
@@ -101,6 +141,9 @@ class ListsRepo {
         hours.addAll({int.parse(rows.children[0].text): rows.children[1].text});
       }
 
+      //licznik grup klasy
+      int maxGroup = 1;
+
       //kolumna planu lekcji
       for (var i = 2; i <= 6; i++) {
         //wiersz planu lekcji
@@ -109,6 +152,7 @@ class ListsRepo {
 
           if (cell.children.isNotEmpty) {
             if (cell.children[0].className == 'p') {
+              //lekcja całą klasą
               schedule[i - 2][j].add(
                 Lesson(
                   name: cell.children[0].text,
@@ -124,11 +168,17 @@ class ListsRepo {
                 ),
               );
             } else {
+              //lekcja podzielona na grupy
               for (var groupLesson in cell.children) {
                 if (groupLesson.children.isNotEmpty) {
+                  var names = getGroupLesson(groupLesson.children[0].text);
+                  if (names[2] > maxGroup) {
+                    maxGroup = names[2];
+                  }
                   schedule[i - 2][j].add(
                     Lesson(
-                      name: groupLesson.children[0].text,
+                      name: names[0],
+                      group: names[1],
                       teacher: Teacher(
                           code: groupLesson.children[1].text,
                           fullName: '',
@@ -153,6 +203,7 @@ class ListsRepo {
         type: Type.scheduleClass,
         validFrom: validFrom,
         hours: hours,
+        groups: maxGroup,
         schedule: schedule,
       );
     } else {
