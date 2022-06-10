@@ -9,6 +9,8 @@ abstract class ScheduleState extends Equatable {
 
 class ScheduleInitial extends ScheduleState {}
 
+class ScheduleLoading extends ScheduleState {}
+
 class ScheduleLoaded extends ScheduleState {
   final Schedule schedule;
 

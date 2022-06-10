@@ -4,7 +4,7 @@ abstract class SearchEvent extends Equatable {
   const SearchEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadLists extends SearchEvent {
@@ -29,4 +29,21 @@ class SearchQuery extends SearchEvent {
 
   @override
   List<Object> get props => [query];
+}
+
+class FilterSearch extends SearchEvent {
+  final bool showClasses;
+  final bool showClassrooms;
+  final bool showTeachers;
+  final String? query;
+
+  const FilterSearch({
+    this.showClasses = true,
+    this.showClassrooms = true,
+    this.showTeachers = true,
+    this.query,
+  });
+
+  @override
+  List<Object?> get props => [showClasses, showClassrooms, showTeachers, query];
 }

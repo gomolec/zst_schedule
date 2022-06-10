@@ -10,6 +10,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final ListsRepo repository;
   ScheduleBloc(this.repository) : super(ScheduleInitial()) {
     on<GetSchedule>((event, emit) async {
+      emit(ScheduleLoading());
+
       var schedule = await repository.getSchedule(event.scheduleLink);
 
       emit(ScheduleLoaded(schedule: schedule));

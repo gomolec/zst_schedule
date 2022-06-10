@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'ZST Schedule',
-        initialRoute: '/search',
+        initialRoute: '/',
         routes: {
           '/': (context) => const HomeScreen(),
           '/schedule': (context) => const ScheduleScreen(),

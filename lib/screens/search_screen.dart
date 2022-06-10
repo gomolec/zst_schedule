@@ -5,21 +5,44 @@ import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/blocs/search_bloc/search_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 
+class FilterArguments {
+  final bool showClasses;
+  final bool showClassrooms;
+  final bool showTeachers;
+
+  const FilterArguments({
+    this.showClasses = true,
+    this.showClassrooms = true,
+    this.showTeachers = true,
+  });
+}
+
 class SearchScreen extends StatelessWidget {
   const SearchScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final filters = (ModalRoute.of(context)!.settings.arguments == null)
+        ? const FilterArguments()
+        : (ModalRoute.of(context)!.settings.arguments as FilterArguments);
     return BlocBuilder<ListsBloc, ListsState>(
       builder: (context, listsState) {
         if (listsState is ListsLoaded) {
-          context.read<SearchBloc>().add(
-                LoadLists(
-                  classesList: listsState.classesList,
-                  classroomsList: listsState.classroomsList,
-                  teachersList: listsState.teachersList,
-                ),
-              );
+          if (context.read<SearchBloc>().state is SearchInitial) {
+            context.read<SearchBloc>().add(
+                  LoadLists(
+                    classesList: listsState.classesList,
+                    classroomsList: listsState.classroomsList,
+                    teachersList: listsState.teachersList,
+                  ),
+                );
+          }
+          context.read<SearchBloc>().add(FilterSearch(
+                showClasses: filters.showClasses,
+                showClassrooms: filters.showClassrooms,
+                showTeachers: filters.showClassrooms,
+                query: '',
+              ));
           return Scaffold(
             appBar: AppBar(
               title: TextField(
@@ -34,6 +57,22 @@ class SearchScreen extends StatelessWidget {
                       SearchQuery(query),
                     ),
               ),
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return FilteringDialog(
+                            showClasses: filters.showClasses,
+                            showClassrooms: filters.showClassrooms,
+                            showTeachers: filters.showTeachers,
+                          );
+                        });
+                  },
+                  icon: const Icon(Icons.sort_rounded),
+                )
+              ],
             ),
             body: BlocBuilder<SearchBloc, SearchState>(
               builder: (context, searchState) {
@@ -51,13 +90,9 @@ class SearchScreen extends StatelessWidget {
                             title: Text(classTile.fullName.toString()),
                             subtitle: Text(classTile.link),
                             onTap: () {
-                              // context.read<ScheduleBloc>().add(
-                              //     GetSchedule(scheduleLink: classTile.link));
-                              // Navigator.pushNamed(
-                              //   context,
-                              //   '/schedule',
-                              //   arguments: classTile,
-                              // );
+                              context.read<ScheduleBloc>().add(
+                                  GetSchedule(scheduleLink: classTile.link));
+                              Navigator.pop(context);
                             },
                           );
                         } else if (searchState.results[index] is Classroom) {
@@ -71,11 +106,7 @@ class SearchScreen extends StatelessWidget {
                             onTap: () {
                               context.read<ScheduleBloc>().add(GetSchedule(
                                   scheduleLink: classroomTile.link));
-                              Navigator.pushNamed(
-                                context,
-                                '/schedule',
-                                arguments: classroomTile,
-                              );
+                              Navigator.pop(context);
                             },
                           );
                         } else {
@@ -89,11 +120,7 @@ class SearchScreen extends StatelessWidget {
                             onTap: () {
                               context.read<ScheduleBloc>().add(
                                   GetSchedule(scheduleLink: teacherTile.link));
-                              Navigator.pushNamed(
-                                context,
-                                '/schedule',
-                                arguments: teacherTile,
-                              );
+                              Navigator.pop(context);
                             },
                           );
                         }
@@ -112,6 +139,98 @@ class SearchScreen extends StatelessWidget {
           );
         }
       },
+    );
+  }
+}
+
+class FilteringDialog extends StatefulWidget {
+  final bool showClasses;
+  final bool showClassrooms;
+  final bool showTeachers;
+  const FilteringDialog({
+    Key? key,
+    required this.showClasses,
+    required this.showClassrooms,
+    required this.showTeachers,
+  }) : super(key: key);
+
+  @override
+  State<FilteringDialog> createState() => _SortingDialogState();
+}
+
+class _SortingDialogState extends State<FilteringDialog> {
+  late bool showClasses;
+  late bool showClassrooms;
+  late bool showTeachers;
+
+  @override
+  void initState() {
+    super.initState();
+    showClasses = widget.showClasses;
+    showClassrooms = widget.showClassrooms;
+    showTeachers = widget.showTeachers;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Filtrowanie'),
+      contentPadding: EdgeInsets.zero,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CheckboxListTile(
+            title: const Text('Klasy'),
+            value: showClasses,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  showClasses = value;
+                });
+              }
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Sale lekcyjne'),
+            value: showClassrooms,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  showClassrooms = value;
+                });
+              }
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Nauczyciele'),
+            value: showTeachers,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  showTeachers = value;
+                });
+              }
+            },
+          )
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Anuluj'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            context.read<SearchBloc>().add(FilterSearch(
+                  showClasses: showClasses,
+                  showClassrooms: showClassrooms,
+                  showTeachers: showClassrooms,
+                ));
+            Navigator.pop(context);
+          },
+          child: const Text('Zapisz'),
+        ),
+      ],
     );
   }
 }
