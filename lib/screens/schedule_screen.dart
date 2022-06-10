@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
-import 'package:zst_schedule/repositories/schedule_repo.dart';
 
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({Key? key}) : super(key: key);
@@ -9,7 +9,6 @@ class ScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Class;
-    var listsRepo = ListsRepo();
     return DefaultTabController(
       length: 5,
       child: Scaffold(
@@ -46,19 +45,34 @@ class ScheduleScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            ScheduleList(
-                listsRepo: listsRepo, scheduleLink: args.link, index: 0),
-            ScheduleList(
-                listsRepo: listsRepo, scheduleLink: args.link, index: 1),
-            ScheduleList(
-                listsRepo: listsRepo, scheduleLink: args.link, index: 2),
-            ScheduleList(
-                listsRepo: listsRepo, scheduleLink: args.link, index: 3),
-            ScheduleList(
-                listsRepo: listsRepo, scheduleLink: args.link, index: 4),
-          ],
+        body: BlocBuilder<ScheduleBloc, ScheduleState>(
+          builder: (context, state) {
+            if (state is ScheduleLoaded) {
+              return TabBarView(
+                children: [
+                  ScheduleList(
+                      lessons: state.schedule.schedule[0],
+                      maxGroup: state.schedule.groups),
+                  ScheduleList(
+                      lessons: state.schedule.schedule[1],
+                      maxGroup: state.schedule.groups),
+                  ScheduleList(
+                      lessons: state.schedule.schedule[2],
+                      maxGroup: state.schedule.groups),
+                  ScheduleList(
+                      lessons: state.schedule.schedule[3],
+                      maxGroup: state.schedule.groups),
+                  ScheduleList(
+                      lessons: state.schedule.schedule[4],
+                      maxGroup: state.schedule.groups),
+                ],
+              );
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
         ),
       ),
     );
@@ -66,54 +80,40 @@ class ScheduleScreen extends StatelessWidget {
 }
 
 class ScheduleList extends StatelessWidget {
+  final List<List<Lesson>> lessons;
+  final int maxGroup;
   const ScheduleList({
     Key? key,
-    required this.listsRepo,
-    required this.scheduleLink,
-    required this.index,
+    required this.lessons,
+    required this.maxGroup,
   }) : super(key: key);
-
-  final int index;
-  final ListsRepo listsRepo;
-  final String scheduleLink;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: listsRepo.getSchedule(scheduleLink),
-      builder: (BuildContext context, AsyncSnapshot<Schedule> snapshot) {
-        if (snapshot.hasData) {
-          var scheduleList = snapshot.data!.schedule[index];
-          var maxGroup = snapshot.data!.groups;
-          return SingleChildScrollView(
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: scheduleList.length,
-              itemBuilder: ((context, index) {
-                var lesson = scheduleList[index];
+    return SingleChildScrollView(
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: lessons.length,
+        itemBuilder: ((context, index) {
+          var lesson = lessons[index];
 
-                if (lesson.isNotEmpty) {
-                  return ListTile(
-                    leading: Text("$index."),
-                    title: Text(lesson[0].name),
-                    trailing: lesson[0].group != null
-                        ? Text("${lesson[0].group}/$maxGroup")
-                        : null,
-                    subtitle: Text(lesson[0].classroom.oldNumber +
-                        ", " +
-                        lesson[0].teacher.code),
-                  );
-                } else {
-                  return const SizedBox();
-                }
-              }),
-            ),
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
+          if (lesson.isNotEmpty) {
+            return ListTile(
+              leading: Text("$index."),
+              title: Text(lesson[0].name),
+              trailing: lesson[0].group != null
+                  ? Text("${lesson[0].group}/$maxGroup")
+                  : null,
+              subtitle: Text(lesson[0].classroom.oldNumber +
+                  ", " +
+                  lesson[0].teacher.code),
+            );
+          } else {
+            return const SizedBox();
+          }
+        }),
+      ),
     );
   }
 }

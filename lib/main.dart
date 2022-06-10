@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:zst_schedule/bloc/lists_bloc.dart';
+import 'package:zst_schedule/blocs/lists_bloc/lists_bloc.dart';
+import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 import 'package:zst_schedule/repositories/schedule_repo.dart';
 import 'package:zst_schedule/screens/home_screen.dart';
@@ -21,6 +22,10 @@ class MyApp extends StatelessWidget {
         BlocProvider<ListsBloc>(
           create: (BuildContext context) =>
               ListsBloc(listsRepo)..add(const GetLists()),
+          lazy: false,
+        ),
+        BlocProvider<ScheduleBloc>(
+          create: (BuildContext context) => ScheduleBloc(listsRepo),
           lazy: false,
         ),
       ],
