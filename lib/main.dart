@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zst_schedule/blocs/lists_bloc/lists_bloc.dart';
 import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
+import 'package:zst_schedule/blocs/search_bloc/search_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 import 'package:zst_schedule/repositories/schedule_repo.dart';
 import 'package:zst_schedule/screens/home_screen.dart';
 import 'package:zst_schedule/screens/schedule_screen.dart';
+import 'package:zst_schedule/screens/search_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,13 +30,18 @@ class MyApp extends StatelessWidget {
           create: (BuildContext context) => ScheduleBloc(listsRepo),
           lazy: false,
         ),
+        BlocProvider<SearchBloc>(
+          create: (BuildContext context) => SearchBloc(),
+          lazy: false,
+        ),
       ],
       child: MaterialApp(
         title: 'ZST Schedule',
-        initialRoute: '/',
+        initialRoute: '/search',
         routes: {
           '/': (context) => const HomeScreen(),
           '/schedule': (context) => const ScheduleScreen(),
+          '/search': (context) => const SearchScreen(),
         },
       ),
     );
