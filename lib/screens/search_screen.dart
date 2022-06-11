@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:zst_schedule/blocs/lists_bloc/lists_bloc.dart';
 import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/blocs/search_bloc/search_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 
 class FilterArguments {
-  final bool showClasses;
-  final bool showClassrooms;
-  final bool showTeachers;
+  bool showClasses;
+  bool showClassrooms;
+  bool showTeachers;
 
-  const FilterArguments({
+  FilterArguments({
     this.showClasses = true,
     this.showClassrooms = true,
     this.showTeachers = true,
   });
+  void handleFiltersChanged(
+    FilterArguments changes,
+  ) {
+    showClasses = changes.showClasses;
+    showClassrooms = changes.showClassrooms;
+    showTeachers = changes.showTeachers;
+  }
 }
 
 class SearchScreen extends StatelessWidget {
@@ -22,9 +30,10 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filters = (ModalRoute.of(context)!.settings.arguments == null)
-        ? const FilterArguments()
-        : (ModalRoute.of(context)!.settings.arguments as FilterArguments);
+    FilterArguments filters =
+        (ModalRoute.of(context)!.settings.arguments == null)
+            ? FilterArguments()
+            : (ModalRoute.of(context)!.settings.arguments as FilterArguments);
     return BlocBuilder<ListsBloc, ListsState>(
       builder: (context, listsState) {
         if (listsState is ListsLoaded) {
@@ -67,6 +76,7 @@ class SearchScreen extends StatelessWidget {
                             showClasses: filters.showClasses,
                             showClassrooms: filters.showClassrooms,
                             showTeachers: filters.showTeachers,
+                            onChanged: filters.handleFiltersChanged,
                           );
                         });
                   },
@@ -90,8 +100,9 @@ class SearchScreen extends StatelessWidget {
                             title: Text(classTile.fullName.toString()),
                             subtitle: Text(classTile.link),
                             onTap: () {
-                              context.read<ScheduleBloc>().add(
-                                  GetSchedule(scheduleLink: classTile.link));
+                              context
+                                  .read<ScheduleBloc>()
+                                  .add(GetSchedule(classModel: classTile));
                               Navigator.pop(context);
                             },
                           );
@@ -104,8 +115,8 @@ class SearchScreen extends StatelessWidget {
                                 classroomTile.oldNumber.toString()),
                             subtitle: Text(classroomTile.link),
                             onTap: () {
-                              context.read<ScheduleBloc>().add(GetSchedule(
-                                  scheduleLink: classroomTile.link));
+                              context.read<ScheduleBloc>().add(
+                                  GetSchedule(classroomModel: classroomTile));
                               Navigator.pop(context);
                             },
                           );
@@ -118,8 +129,9 @@ class SearchScreen extends StatelessWidget {
                                 teacherTile.code.toString()),
                             subtitle: Text(teacherTile.link),
                             onTap: () {
-                              context.read<ScheduleBloc>().add(
-                                  GetSchedule(scheduleLink: teacherTile.link));
+                              context
+                                  .read<ScheduleBloc>()
+                                  .add(GetSchedule(teacherModel: teacherTile));
                               Navigator.pop(context);
                             },
                           );
@@ -147,11 +159,13 @@ class FilteringDialog extends StatefulWidget {
   final bool showClasses;
   final bool showClassrooms;
   final bool showTeachers;
+  final ValueChanged<FilterArguments> onChanged;
   const FilteringDialog({
     Key? key,
     required this.showClasses,
     required this.showClassrooms,
     required this.showTeachers,
+    required this.onChanged,
   }) : super(key: key);
 
   @override
@@ -224,8 +238,13 @@ class _SortingDialogState extends State<FilteringDialog> {
             context.read<SearchBloc>().add(FilterSearch(
                   showClasses: showClasses,
                   showClassrooms: showClassrooms,
-                  showTeachers: showClassrooms,
+                  showTeachers: showTeachers,
                 ));
+            widget.onChanged(FilterArguments(
+              showClasses: showClasses,
+              showClassrooms: showClassrooms,
+              showTeachers: showTeachers,
+            ));
             Navigator.pop(context);
           },
           child: const Text('Zapisz'),

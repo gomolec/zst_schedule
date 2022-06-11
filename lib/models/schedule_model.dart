@@ -4,14 +4,14 @@ import 'package:equatable/equatable.dart';
 
 import 'lesson_model.dart';
 
-enum Type {
+enum ScheduleType {
   scheduleClass,
   scheduleTeacher,
   scheduleClassroom,
 }
 
 class Schedule extends Equatable {
-  final Type type;
+  final ScheduleType type;
   final String validFrom;
   final Map<int, String> hours;
   final int groups;
@@ -26,7 +26,7 @@ class Schedule extends Equatable {
   });
 
   Schedule copyWith({
-    Type? type,
+    ScheduleType? type,
     String? validFrom,
     Map<int, String>? hours,
     int? groups,

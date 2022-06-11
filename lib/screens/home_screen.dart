@@ -24,7 +24,11 @@ class HomeScreen extends StatelessWidget {
         child: Scaffold(
           appBar: (() {
             if (state is ScheduleLoaded) {
-              return const LoadedScheduleAppBar();
+              return LoadedScheduleAppBar(
+                classModel: state.classModel,
+                classroomModel: state.classroomModel,
+                teacherModel: state.teacherModel,
+              );
             } else if (state is ScheduleInitial) {
               return getDefaultScheduleAppBar();
             }
@@ -174,7 +178,12 @@ class WelcomeView extends StatelessWidget {
 
 class LoadedScheduleAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const LoadedScheduleAppBar({Key? key}) : super(key: key);
+  final Class? classModel;
+  final Classroom? classroomModel;
+  final Teacher? teacherModel;
+  const LoadedScheduleAppBar(
+      {Key? key, this.classModel, this.classroomModel, this.teacherModel})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +194,17 @@ class LoadedScheduleAppBar extends StatelessWidget
           Scaffold.of(context).openDrawer();
         },
       ),
-      title: const Text("TYTUŁ"),
+      title: (() {
+        if (classModel != null) {
+          return Text(classModel!.code);
+        } else if (classroomModel != null) {
+          return Text(classroomModel!.oldNumber);
+        } else if (teacherModel != null) {
+          return Text(teacherModel!.code);
+        } else {
+          return null;
+        }
+      }()),
       automaticallyImplyLeading: false,
       actions: const [
         Center(
@@ -277,9 +296,9 @@ class ScheduleList extends StatelessWidget {
               trailing: lesson[0].group != null
                   ? Text("${lesson[0].group}/$maxGroup")
                   : null,
-              subtitle: Text(lesson[0].classroom.oldNumber +
+              subtitle: Text(lesson[0].classroom!.oldNumber +
                   ", " +
-                  lesson[0].teacher.code),
+                  lesson[0].teacher!.code),
             );
           } else {
             return const SizedBox();

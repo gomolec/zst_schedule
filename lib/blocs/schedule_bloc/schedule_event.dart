@@ -4,16 +4,20 @@ abstract class ScheduleEvent extends Equatable {
   const ScheduleEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class GetSchedule extends ScheduleEvent {
-  final String scheduleLink;
+  final Class? classModel;
+  final Classroom? classroomModel;
+  final Teacher? teacherModel;
 
   const GetSchedule({
-    required this.scheduleLink,
+    this.classModel,
+    this.classroomModel,
+    this.teacherModel,
   });
 
   @override
-  List<Object> get props => [scheduleLink];
+  List<Object?> get props => [classModel, classroomModel, teacherModel];
 }

@@ -1,21 +1,21 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
-
-import 'classroom_model.dart';
-import 'teacher_model.dart';
+import 'package:zst_schedule/models/models.dart';
 
 class Lesson extends Equatable {
   final String name;
   final int? group;
-  final Teacher teacher;
-  final Classroom classroom;
+  final Teacher? teacher;
+  final Classroom? classroom;
+  final Class? schoolClass;
 
   const Lesson({
     required this.name,
     this.group,
-    required this.teacher,
-    required this.classroom,
+    this.teacher,
+    this.classroom,
+    this.schoolClass,
   });
 
   Lesson copyWith({
@@ -23,12 +23,14 @@ class Lesson extends Equatable {
     int? group,
     Teacher? teacher,
     Classroom? classroom,
+    Class? schoolClass,
   }) {
     return Lesson(
       name: name ?? this.name,
       group: group ?? this.group,
       teacher: teacher ?? this.teacher,
       classroom: classroom ?? this.classroom,
+      schoolClass: schoolClass ?? this.schoolClass,
     );
   }
 
@@ -36,17 +38,19 @@ class Lesson extends Equatable {
     return {
       'name': name,
       'group': group,
-      'teacher': teacher.toMap(),
-      'classroom': classroom.toMap(),
+      'teacher': teacher!.toMap(),
+      'classroom': classroom!.toMap(),
+      'schoolClass': schoolClass!.toMap(),
     };
   }
 
   factory Lesson.fromMap(Map<String, dynamic> map) {
     return Lesson(
       name: map['name'] ?? '',
-      group: map['group'],
+      group: map['group']?.toInt(),
       teacher: Teacher.fromMap(map['teacher']),
       classroom: Classroom.fromMap(map['classroom']),
+      schoolClass: Class.fromMap(map['schoolClass']),
     );
   }
 
@@ -56,9 +60,17 @@ class Lesson extends Equatable {
 
   @override
   String toString() {
-    return 'Lesson(name: $name, group: $group, teacher: $teacher, classroom: $classroom)';
+    return 'Lesson(name: $name, group: $group, teacher: $teacher, classroom: $classroom, schoolClass: $schoolClass)';
   }
 
   @override
-  List<Object?> get props => [name, group, teacher, classroom];
+  List<Object?> get props {
+    return [
+      name,
+      group,
+      teacher,
+      classroom,
+      schoolClass,
+    ];
+  }
 }

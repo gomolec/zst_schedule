@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zst_schedule/blocs/lists_bloc/lists_bloc.dart';
-import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 import 'package:zst_schedule/repositories/schedule_repo.dart';
 
@@ -41,9 +40,9 @@ class ClassesList extends StatelessWidget {
                       schoolClass.fullName.toString()),
                   subtitle: Text(schoolClass.link),
                   onTap: () {
-                    context
-                        .read<ScheduleBloc>()
-                        .add(GetSchedule(scheduleLink: schoolClass.link));
+                    // context
+                    //     .read<ScheduleBloc>()
+                    //     .add(GetSchedule(scheduleLink: schoolClass.link));
                     Navigator.pushNamed(
                       context,
                       '/schedule',

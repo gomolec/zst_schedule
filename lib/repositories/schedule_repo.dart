@@ -119,7 +119,7 @@ class ListsRepo {
     }
   }
 
-  Future<Schedule> getSchedule(String scheduleUrl) async {
+  Future<Schedule> getSchedule(String scheduleUrl, ScheduleType type) async {
     final response =
         await http.Client().get(Uri.parse(url + '/' + scheduleUrl));
 
@@ -150,57 +150,74 @@ class ListsRepo {
         for (var j = 0; j < scheduleRows.length; j++) {
           var cell = scheduleRows[j].children[i];
 
-          if (cell.children.isNotEmpty) {
-            if (cell.children[0].className == 'p') {
-              //lekcja całą klasą
-              schedule[i - 2][j].add(
-                Lesson(
-                  name: cell.children[0].text,
-                  teacher: Teacher(
-                      code: cell.children[1].text,
-                      fullName: '',
-                      link: cell.children[1].attributes['href'] ?? ''),
-                  classroom: Classroom(
-                    newNumber: '',
-                    oldNumber: cell.children[2].text,
-                    link: cell.children[2].attributes['href'] ?? '',
-                  ),
-                ),
-              );
-            } else {
-              //lekcja podzielona na grupy
-              for (var groupLesson in cell.children) {
-                if (groupLesson.children.isNotEmpty) {
-                  var names = getGroupLesson(groupLesson.children[0].text);
-                  if (names[2] > maxGroup) {
-                    maxGroup = names[2];
-                  }
-                  schedule[i - 2][j].add(
-                    Lesson(
-                      name: names[0],
-                      group: names[1],
-                      teacher: Teacher(
-                          code: groupLesson.children[1].text,
-                          fullName: '',
-                          link:
-                              groupLesson.children[1].attributes['href'] ?? ''),
-                      classroom: Classroom(
-                        newNumber: '',
-                        oldNumber: groupLesson.children[2].text,
-                        link: groupLesson.children[2].attributes['href'] ?? '',
-                      ),
+          if (type == ScheduleType.scheduleClass) {
+            if (cell.children.isNotEmpty) {
+              if (cell.children[0].className == 'p') {
+                //lekcja całą klasą
+                schedule[i - 2][j].add(
+                  Lesson(
+                    name: cell.children[0].text,
+                    teacher: Teacher(
+                        code: cell.children[1].text,
+                        fullName: '',
+                        link: cell.children[1].attributes['href'] ?? ''),
+                    classroom: Classroom(
+                      newNumber: '',
+                      oldNumber: cell.children[2].text,
+                      link: cell.children[2].attributes['href'] ?? '',
                     ),
-                  );
+                  ),
+                );
+              } else {
+                //lekcja podzielona na grupy
+                for (var groupLesson in cell.children) {
+                  if (groupLesson.children.isNotEmpty) {
+                    var names = getGroupLesson(groupLesson.children[0].text);
+                    if (names[2] > maxGroup) {
+                      maxGroup = names[2];
+                    }
+                    schedule[i - 2][j].add(
+                      Lesson(
+                        name: names[0],
+                        group: names[1],
+                        teacher: Teacher(
+                            code: groupLesson.children[1].text,
+                            fullName: '',
+                            link: groupLesson.children[1].attributes['href'] ??
+                                ''),
+                        classroom: Classroom(
+                          newNumber: '',
+                          oldNumber: groupLesson.children[2].text,
+                          link:
+                              groupLesson.children[2].attributes['href'] ?? '',
+                        ),
+                      ),
+                    );
+                  }
                 }
               }
             }
+          } else if (type == ScheduleType.scheduleClassroom) {
+            schedule[i - 2][j].add(
+              Lesson(
+                name: cell.children[1].text,
+                teacher: Teacher(
+                    code: cell.children[0].text,
+                    fullName: '',
+                    link: cell.children[0].attributes['href'] ?? ''),
+                schoolClass: Class(
+                    code: cell.children[1].text,
+                    fullName: '',
+                    link: cell.children[1].attributes['href'] ?? ''),
+              ),
+            );
           }
         }
       }
       String validFrom = document.body!.children[1].children[0].children[0]
           .children[1].children[0].text;
       return Schedule(
-        type: Type.scheduleClass,
+        type: type,
         validFrom: validFrom,
         hours: hours,
         groups: maxGroup,
