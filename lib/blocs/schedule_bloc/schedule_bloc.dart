@@ -7,7 +7,7 @@ part 'schedule_event.dart';
 part 'schedule_state.dart';
 
 class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
-  final ListsRepo repository;
+  final ScheduleRepo repository;
   ScheduleBloc(this.repository) : super(ScheduleInitial()) {
     on<GetSchedule>((event, emit) async {
       emit(ScheduleLoading());

@@ -3,121 +3,8 @@ import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
 import 'package:zst_schedule/models/models.dart';
 
-class ListsRepo {
+class ScheduleRepo {
   static const String url = 'http://www.zstrybnik.pl/html';
-
-  List<String> getClassroomNumber(String downloadedNumber) {
-    var numbers = downloadedNumber.split(' ');
-    return numbers;
-  }
-
-  List<String> getClassName(String downloadedName) {
-    var names = downloadedName.split(' ');
-    if (names.length > 1) {
-      var code = names.removeAt(0);
-      return [code, names.join(' ').substring(1)];
-    }
-    return [downloadedName];
-  }
-
-  List getGroupLesson(String downloadedText) {
-    var texts = downloadedText.split('-');
-    int lessonGroup = int.parse(texts[texts.length - 1].split('/')[0]);
-    int scheduleGroups = int.parse(texts[texts.length - 1].split('/')[1]);
-    texts.removeLast();
-    String lessonName = texts.join('-');
-    return [lessonName, lessonGroup, scheduleGroups];
-  }
-
-  Future<List<Class>> getClasses() async {
-    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
-
-    if (response.statusCode == 200) {
-      var document = parser.parse(utf8.decode(response.bodyBytes));
-
-      var tabs = document.getElementsByTagName('ul');
-
-      var tabs2 = tabs[0].children;
-
-      List<Class> classes = [];
-
-      for (var item in tabs2) {
-        var downloadedNames = item.firstChild?.text ?? '';
-        var link = item.firstChild?.attributes['href'] ?? '';
-
-        var names = getClassName(downloadedNames);
-
-        classes.add(
-          Class(
-            code: names[0],
-            fullName: names.length == 2 ? names[1] : null,
-            link: link,
-          ),
-        );
-      }
-      return classes;
-    } else {
-      throw Exception('Failed to load classes');
-    }
-  }
-
-  Future<List<Teacher>> getTeachers() async {
-    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
-
-    if (response.statusCode == 200) {
-      var document = parser.parse(utf8.decode(response.bodyBytes));
-
-      var tabs = document.getElementsByTagName('ul');
-
-      var tabs2 = tabs[1].children;
-
-      List<Teacher> teachers = [];
-
-      for (var item in tabs2) {
-        var code = item.firstChild?.text ?? '';
-        var link = item.firstChild?.attributes['href'] ?? '';
-
-        teachers.add(
-          Teacher(code: code, link: link),
-        );
-      }
-      return teachers;
-    } else {
-      throw Exception('Failed to load teachers');
-    }
-  }
-
-  Future<List<Classroom>> getClassrooms() async {
-    final response = await http.Client().get(Uri.parse(url + '/lista.html'));
-
-    if (response.statusCode == 200) {
-      var document = parser.parse(utf8.decode(response.bodyBytes));
-
-      var tabs = document.getElementsByTagName('ul');
-
-      var tabs2 = tabs[2].children;
-
-      List<Classroom> classrooms = [];
-
-      for (var item in tabs2) {
-        var downloadedNumbers = item.firstChild?.text ?? '';
-        var link = item.firstChild?.attributes['href'] ?? '';
-
-        var numbers = getClassroomNumber(downloadedNumbers);
-
-        classrooms.add(
-          Classroom(
-            oldNumber: numbers[0],
-            newNumber: numbers.length == 2 ? numbers[1] : null,
-            link: link,
-          ),
-        );
-      }
-      return classrooms;
-    } else {
-      throw Exception('Failed to load classrooms');
-    }
-  }
 
   Future<Schedule> getSchedule(String scheduleUrl, ScheduleType type) async {
     final response =
@@ -136,9 +23,11 @@ class ListsRepo {
       List<List<List<Lesson>>> schedule = List.generate(
           6, (i) => List.generate(scheduleRows.length, (i) => []));
 
-      Map<int, String> hours = {};
+      Map<int, List> hours = {};
       for (var rows in scheduleRows) {
-        hours.addAll({int.parse(rows.children[0].text): rows.children[1].text});
+        hours.addAll({
+          int.parse(rows.children[0].text): rows.children[1].text.split('-')
+        });
       }
 
       //licznik grup klasy
@@ -159,10 +48,10 @@ class ListsRepo {
                     name: cell.children[0].text,
                     teacher: Teacher(
                         code: cell.children[1].text,
-                        fullName: '',
+                        fullName: null,
                         link: cell.children[1].attributes['href'] ?? ''),
                     classroom: Classroom(
-                      newNumber: '',
+                      newNumber: null,
                       oldNumber: cell.children[2].text,
                       link: cell.children[2].attributes['href'] ?? '',
                     ),
@@ -182,11 +71,11 @@ class ListsRepo {
                         group: names[1],
                         teacher: Teacher(
                             code: groupLesson.children[1].text,
-                            fullName: '',
+                            fullName: null,
                             link: groupLesson.children[1].attributes['href'] ??
                                 ''),
                         classroom: Classroom(
-                          newNumber: '',
+                          newNumber: null,
                           oldNumber: groupLesson.children[2].text,
                           link:
                               groupLesson.children[2].attributes['href'] ?? '',
@@ -198,19 +87,76 @@ class ListsRepo {
               }
             }
           } else if (type == ScheduleType.scheduleClassroom) {
-            schedule[i - 2][j].add(
-              Lesson(
-                name: cell.children[1].text,
-                teacher: Teacher(
-                    code: cell.children[0].text,
-                    fullName: '',
-                    link: cell.children[0].attributes['href'] ?? ''),
-                schoolClass: Class(
-                    code: cell.children[1].text,
-                    fullName: '',
-                    link: cell.children[1].attributes['href'] ?? ''),
-              ),
-            );
+            if (cell.children.length == 4) {
+              schedule[i - 2][j].add(
+                Lesson(
+                  name: cell.children[2].text,
+                  teacher: Teacher(
+                      code: cell.children[0].text,
+                      fullName: null,
+                      link: cell.children[0].attributes['href'] ?? ''),
+                  schoolClass: Class(
+                      code: cell.children[1].text,
+                      fullName: null,
+                      link: cell.children[1].attributes['href'] ?? ''),
+                ),
+              );
+            } else if (cell.children.length > 4) {
+              String text = cell.text.split(" ")[1];
+              schedule[i - 2][j].add(
+                Lesson(
+                  name: cell.children[cell.children.length - 2].text, //3
+                  teacher: Teacher(
+                      code: cell.children[0].text,
+                      fullName: null,
+                      link: cell.children[0].attributes['href'] ?? ''),
+                  schoolClass: Class(
+                      code: cell.children[1].text,
+                      fullName: null,
+                      link: cell.children[1].attributes['href'] ?? ''),
+                  optionalText: text,
+                ),
+              );
+            }
+          } else if (type == ScheduleType.scheduleTeacher) {
+            if (cell.children.length == 1) {
+              cell = cell.children[0];
+            }
+            if (cell.children.length == 10) {
+              schedule[i - 2][j].add(
+                Lesson(
+                  name: cell.children[1].text,
+                  schoolClass: Class(
+                      code: cell.children[0].text,
+                      fullName: null,
+                      link: cell.children[0].attributes['href'] ?? ''),
+                  classroom: Classroom(
+                    newNumber: null,
+                    oldNumber: cell.children[2].text,
+                    link: cell.children[2].attributes['href'] ?? '',
+                  ),
+                ),
+              );
+            } else if (cell.children.length >= 4) {
+              String text = cell.text.split(" ")[0];
+              schedule[i - 2][j].add(
+                Lesson(
+                  name: cell.children[cell.children.length - 3].text, //3
+                  schoolClass: Class(
+                      code: cell.children[0].text,
+                      fullName: null,
+                      link: cell.children[0].attributes['href'] ?? ''),
+                  classroom: Classroom(
+                    newNumber: null,
+                    oldNumber: cell.children[cell.children.length - 2].text,
+                    link: cell.children[cell.children.length - 2]
+                            .attributes['href'] ??
+                        '',
+                  ),
+                  optionalText: text,
+                ),
+              );
+            }
           }
         }
       }
@@ -226,5 +172,14 @@ class ListsRepo {
     } else {
       throw Exception('Failed to load schedule');
     }
+  }
+
+  List getGroupLesson(String downloadedText) {
+    var texts = downloadedText.split('-');
+    int lessonGroup = int.parse(texts[texts.length - 1].split('/')[0]);
+    int scheduleGroups = int.parse(texts[texts.length - 1].split('/')[1]);
+    texts.removeLast();
+    String lessonName = texts.join('-');
+    return [lessonName, lessonGroup, scheduleGroups];
   }
 }

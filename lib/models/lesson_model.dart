@@ -1,36 +1,45 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
+
 import 'package:zst_schedule/models/models.dart';
 
 class Lesson extends Equatable {
   final String name;
   final int? group;
+  final int? groupId;
   final Teacher? teacher;
   final Classroom? classroom;
   final Class? schoolClass;
+  final String? optionalText;
 
   const Lesson({
     required this.name,
     this.group,
+    this.groupId,
     this.teacher,
     this.classroom,
     this.schoolClass,
+    this.optionalText,
   });
 
   Lesson copyWith({
     String? name,
     int? group,
+    int? groupId,
     Teacher? teacher,
     Classroom? classroom,
     Class? schoolClass,
+    String? optionalText,
   }) {
     return Lesson(
       name: name ?? this.name,
       group: group ?? this.group,
+      groupId: groupId ?? this.groupId,
       teacher: teacher ?? this.teacher,
       classroom: classroom ?? this.classroom,
       schoolClass: schoolClass ?? this.schoolClass,
+      optionalText: optionalText ?? this.optionalText,
     );
   }
 
@@ -38,9 +47,11 @@ class Lesson extends Equatable {
     return {
       'name': name,
       'group': group,
-      'teacher': teacher!.toMap(),
-      'classroom': classroom!.toMap(),
-      'schoolClass': schoolClass!.toMap(),
+      'groupId': groupId,
+      'teacher': teacher?.toMap(),
+      'classroom': classroom?.toMap(),
+      'schoolClass': schoolClass?.toMap(),
+      'optionalText': optionalText,
     };
   }
 
@@ -48,9 +59,13 @@ class Lesson extends Equatable {
     return Lesson(
       name: map['name'] ?? '',
       group: map['group']?.toInt(),
-      teacher: Teacher.fromMap(map['teacher']),
-      classroom: Classroom.fromMap(map['classroom']),
-      schoolClass: Class.fromMap(map['schoolClass']),
+      groupId: map['groupId']?.toInt(),
+      teacher: map['teacher'] != null ? Teacher.fromMap(map['teacher']) : null,
+      classroom:
+          map['classroom'] != null ? Classroom.fromMap(map['classroom']) : null,
+      schoolClass:
+          map['schoolClass'] != null ? Class.fromMap(map['schoolClass']) : null,
+      optionalText: map['optionalText'] ?? '',
     );
   }
 
@@ -60,7 +75,7 @@ class Lesson extends Equatable {
 
   @override
   String toString() {
-    return 'Lesson(name: $name, group: $group, teacher: $teacher, classroom: $classroom, schoolClass: $schoolClass)';
+    return 'Lesson(name: $name, group: $group, groupId: $groupId, teacher: $teacher, classroom: $classroom, schoolClass: $schoolClass, optionalText: $optionalText)';
   }
 
   @override
@@ -68,9 +83,11 @@ class Lesson extends Equatable {
     return [
       name,
       group,
+      groupId,
       teacher,
       classroom,
       schoolClass,
+      optionalText,
     ];
   }
 }

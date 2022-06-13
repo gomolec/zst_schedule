@@ -9,7 +9,7 @@ class Class extends Equatable {
 
   const Class({
     required this.code,
-    required this.fullName,
+    this.fullName,
     required this.link,
   });
 

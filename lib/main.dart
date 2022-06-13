@@ -3,10 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zst_schedule/blocs/lists_bloc/lists_bloc.dart';
 import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/blocs/search_bloc/search_bloc.dart';
+import 'package:zst_schedule/repositories/lists_repository.dart';
 import 'package:zst_schedule/repositories/schedule_repo.dart';
 import 'package:zst_schedule/screens/home_screen.dart';
-import 'package:zst_schedule/screens/schedule_screen.dart';
-import 'package:zst_schedule/screens/search_screen.dart';
+import 'package:zst_schedule/screens/schedule_screen/schedule_screen.dart';
+import 'package:zst_schedule/screens/search_screen/search_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ListsRepo listsRepo = ListsRepo();
+    final ScheduleRepo scheduleRepo = ScheduleRepo();
     return MultiBlocProvider(
       providers: [
         BlocProvider<ListsBloc>(
@@ -26,7 +28,7 @@ class MyApp extends StatelessWidget {
           lazy: false,
         ),
         BlocProvider<ScheduleBloc>(
-          create: (BuildContext context) => ScheduleBloc(listsRepo),
+          create: (BuildContext context) => ScheduleBloc(scheduleRepo),
           lazy: false,
         ),
         BlocProvider<SearchBloc>(
@@ -36,10 +38,11 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'ZST Schedule',
-        initialRoute: '/',
+        initialRoute: '/search',
         routes: {
-          '/': (context) => const HomeScreen(),
+          '/g': (context) => const HomeScreen(),
           '/search': (context) => const SearchScreen(),
+          '/schedule': (context) => const ScheduleScreen(),
         },
       ),
     );

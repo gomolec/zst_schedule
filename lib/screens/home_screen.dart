@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:zst_schedule/blocs/schedule_bloc/schedule_bloc.dart';
 import 'package:zst_schedule/models/models.dart';
 
@@ -126,11 +127,26 @@ class LoadedScheduleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TabBarView(children: [
-      ScheduleList(lessons: schedule.schedule[0], maxGroup: schedule.groups),
-      ScheduleList(lessons: schedule.schedule[1], maxGroup: schedule.groups),
-      ScheduleList(lessons: schedule.schedule[2], maxGroup: schedule.groups),
-      ScheduleList(lessons: schedule.schedule[3], maxGroup: schedule.groups),
-      ScheduleList(lessons: schedule.schedule[4], maxGroup: schedule.groups),
+      ScheduleList(
+          lessons: schedule.schedule[0],
+          maxGroup: schedule.groups,
+          type: schedule.type),
+      ScheduleList(
+          lessons: schedule.schedule[1],
+          maxGroup: schedule.groups,
+          type: schedule.type),
+      ScheduleList(
+          lessons: schedule.schedule[2],
+          maxGroup: schedule.groups,
+          type: schedule.type),
+      ScheduleList(
+          lessons: schedule.schedule[3],
+          maxGroup: schedule.groups,
+          type: schedule.type),
+      ScheduleList(
+          lessons: schedule.schedule[4],
+          maxGroup: schedule.groups,
+          type: schedule.type),
     ]);
   }
 }
@@ -271,10 +287,12 @@ AppBar getDefaultScheduleAppBar() {
 }
 
 class ScheduleList extends StatelessWidget {
+  final ScheduleType type;
   final List<List<Lesson>> lessons;
   final int maxGroup;
   const ScheduleList({
     Key? key,
+    required this.type,
     required this.lessons,
     required this.maxGroup,
   }) : super(key: key);
@@ -290,16 +308,31 @@ class ScheduleList extends StatelessWidget {
           var lesson = lessons[index];
 
           if (lesson.isNotEmpty) {
-            return ListTile(
-              leading: Text("$index."),
-              title: Text(lesson[0].name),
-              trailing: lesson[0].group != null
-                  ? Text("${lesson[0].group}/$maxGroup")
-                  : null,
-              subtitle: Text(lesson[0].classroom!.oldNumber +
-                  ", " +
-                  lesson[0].teacher!.code),
-            );
+            if (type == ScheduleType.scheduleClass) {
+              return ListTile(
+                leading: Text("$index."),
+                title: Text(lesson[0].name),
+                trailing: lesson[0].group != null
+                    ? Text("${lesson[0].group}/$maxGroup")
+                    : null,
+                subtitle: Text(lesson[0].classroom!.oldNumber +
+                    ", " +
+                    lesson[0].teacher!.code),
+              );
+            } else if (type == ScheduleType.scheduleClassroom) {
+              return ListTile(
+                leading: Text("$index."),
+                title: Text(lesson[0].name),
+                trailing: lesson[0].group != null
+                    ? Text("${lesson[0].group}/$maxGroup")
+                    : null,
+                subtitle: Text(lesson[0].schoolClass!.code +
+                    ", " +
+                    lesson[0].teacher!.code),
+              );
+            } else {
+              return const SizedBox();
+            }
           } else {
             return const SizedBox();
           }
